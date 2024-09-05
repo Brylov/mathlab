@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  flask_app:
+    build: .
+    ports:
+      - "5000:5000"
+    volumes:
+      - .:/app  # Mount the current directory into the container for easy development
+    environment:
+      FLASK_ENV: development  # Enable Flask debugging mode
+    depends_on:
+      - redis  # If your app depends on redis or other services
+
+  redis:
+    image: "redis:alpine"
+    ports:
+      - "6379:6379"

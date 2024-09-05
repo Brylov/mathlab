@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quadratic Solver</title>
+    <!-- Tailwind CSS via CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100">
+    <div class="min-h-screen flex items-center justify-center">
+        <div class="bg-white p-8 rounded shadow-md w-full max-w-lg">
+            <h1 class="text-2xl font-bold mb-4">Quadratic Equation Solve Game</h1>
+
+            <!-- Display current quadratic equation to solve -->
+            <label class="block">
+                <span class="text-gray-700">Solve the equation:</span>
+                <div class="text-xl font-mono">
+                <strong>{{ equation }}</strong>
+                </div>
+            </label>
+
+            <!-- Display result of previous attempt (Correct or Incorrect) -->
+            
+            <!-- Form to submit the factored form -->
+            <form action="/solve" method="POST" class="space-y-4 mt-6">
+                <input type="text" name="user_answer" class="border rounded p-2 w-full" placeholder="Enter factored form...">
+                <div class="space-x-4">
+                    <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">Submit</button>
+                </div>
+            </form>
+            
+            {% if result %}
+                <div class="mt-6">
+                    <p class="text-gray-700">Result: <strong>{{ result }}</strong></p>
+                    {% if result == "Correct!" %}
+                    <p class="text-gray-700">Correct factored form: <strong>{{ correct_factors }}</strong></p>
+                    {% endif %}
+                </div>
+            {% endif %}
+
+        </div>
+    </div>
+</body>
+</html>

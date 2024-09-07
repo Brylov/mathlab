@@ -1,44 +1,74 @@
 from flask import Flask, render_template, request
 import sympy as sp
-from factor import Factor  # Your quadratic factor class
+from factor import Factor
+from bedmas import Bedmas
 
 app = Flask(__name__)
 factor = Factor()
+bedmas = Bedmas()
 
 @app.route('/')
 def index():
-    # Generate a new equation when the user first accesses the page
-    equation, r1, r2 = factor.generate_factorable_quadratic()
-    factor.equation = equation  # Store equation in Factor instance
-    factor.correct_factors = str(sp.factor(equation))  # Store correct factored form
-    return render_template('index.html', equation=factor.format_equation(equation))
+    problem_type = request.args.get('type', 'quadratic')
+    difficulty = request.args.get('difficulty', 'easy')  # Get difficulty from query parameters
+
+    # Update the difficulty in the factor generator
+    factor.difficulty = difficulty
+
+    if problem_type == 'bedmas':
+        problem, result = bedmas.generate_bedmas_problem()
+        return render_template('index.html', problem_type=problem_type, problem=problem, result=None, difficulty=difficulty)
+    else:
+        equation, formatted_equation = factor.generate_problem()  # Generate a random problem
+        factor.current_problem = equation  # Store the problem to use for checking answers
+        return render_template('index.html', problem_type=problem_type, equation=formatted_equation, result=None, difficulty=difficulty)
+
 
 @app.route('/solve', methods=['POST'])
 def solve():
     user_answer = request.form['user_answer']
-    correct_factors = factor.format_factored_form(sp.factor(factor.equation))
-    result = "Correct!" if factor.check_ans(user_answer, factor.normalize_factors(correct_factors)) else "Incorrect"
+    problem_type = request.form['problem_type']
 
-    if result == "Correct!":
-        # Display the correct answer and generate a new equation
-        equation, r1, r2 = factor.generate_factorable_quadratic()
-        factor.equation = equation  # Store new equation
-        factor.correct_factors = str(sp.factor(equation))
-        return render_template('index.html', equation=factor.format_equation(equation), result=result, 
-                               correct_factors=correct_factors, new_equation=True)
-
+    if problem_type == 'bedmas':
+        result = bedmas.check_answer(user_answer)
+        if result == "Correct!":
+            problem, _ = bedmas.generate_bedmas_problem()
+            return render_template('index.html', problem_type=problem_type, problem=problem, result=result, new_problem=True)
+        else:
+            return render_template('index.html', problem_type=problem_type, problem=bedmas.current_problem, result=result)
     else:
-        # If incorrect, show the result and allow the user to retry
-        return render_template('index.html', equation=factor.format_equation(factor.equation), result=result, 
-                               correct_factors=correct_factors)
+        correct_factors = str(sp.factor(sp.sympify(factor.current_problem)))  # Calculate correct factors
+        result = "Correct!" if factor.check_ans(user_answer, factor.normalize_factors(correct_factors)) else "Incorrect"
+        if result == "Correct!":
+            equation, formatted_equation = factor.generate_problem()  # Generate a new problem
+            factor.current_problem = equation  # Update the current problem
+            return render_template('index.html', equation=formatted_equation, result=result, new_equation=True)
+        else:
+            return render_template('index.html', equation=factor.format_equation(factor.current_problem), result=result)
 
 @app.route('/new')
-def new_equation():
-    # Generate a new equation explicitly when requested
-    equation, r1, r2 = factor.generate_factorable_quadratic()
-    factor.equation = equation  # Store new equation
-    factor.correct_factors = str(sp.factor(equation))  # Store correct factored form
-    return render_template('index.html', equation=factor.format_equation(equation), result=None)
+def new_problem():
+    problem_type = request.args.get('type', 'quadratic')
+    difficulty = request.args.get('difficulty', 'easy')
+
+    # Update the difficulty in the factor generator
+    factor.difficulty = difficulty
+
+    if problem_type == 'bedmas':
+        problem, _ = bedmas.generate_bedmas_problem()
+        return render_template('index.html', problem_type=problem_type, problem=problem, difficulty=difficulty)
+    else:
+        equation, _ = factor.generate_problem()  # Generate a random problem
+        factor.current_problem = equation  # Store the problem to use for checking answers
+        return render_template('index.html', equation=factor.format_equation(equation), difficulty=difficulty)
+
+@app.route('/set_difficulty', methods=['POST'])
+def set_difficulty():
+    difficulty = request.form['difficulty']
+    problem_type = request.form['type']  # Get problem type from the form
+    factor.difficulty = difficulty
+    bedmas.difficulty = difficulty
+    return render_template('index.html', problem_type=problem_type, difficulty=difficulty)
 
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port="8080")

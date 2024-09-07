@@ -3,20 +3,43 @@ import sympy as sp
 import re
 
 class Factor:
-    def __init__(self):
-        self.a = 0
-        self.b = 0
-        self.c = 0
-        self.r1 = 0
-        self.r2 = 0
+    def __init__(self, difficulty='easy'):
+        self.difficulty = difficulty  # Difficulty level for adjusting ranges
+        self.current_problem = None
+
+    def generate_problem(self):
+        # List of functions for different polynomial types
+        functions = [
+            self.generate_factorable_quadratic,
+            self.generate_cubic_problem,
+            self.generate_mixed_polynomial,
+            # self.generate_other_polynomial
+        ]
+        
+        # Randomly select one function
+        selected_function = random.choice(functions)
+        
+        # Generate and return the problem using the selected function
+        return selected_function()
 
     def generate_factorable_quadratic(self):
-        # Generate two random roots
-        self.r1 = random.randint(-10, 10)
-        self.r2 = random.randint(-10, 10)
+        # Set ranges based on difficulty
+        if self.difficulty == 'easy':
+            r_min, r_max = -5, 5
+            a_min, a_max = 1, 2
+        elif self.difficulty == 'medium':
+            r_min, r_max = -10, 10
+            a_min, a_max = 1, 3
+        else:  # Hard
+            r_min, r_max = -20, 20
+            a_min, a_max = 2, 5
+
+        # Generate two random roots based on difficulty
+        self.r1 = random.randint(r_min, r_max)
+        self.r2 = random.randint(r_min, r_max)
 
         # Create coefficients a, b, c based on roots r1 and r2
-        self.a = random.randint(1, 5)  # Keep 'a' simple to make the equations more manageable
+        self.a = random.randint(a_min, a_max)
         self.b = -self.a * (self.r1 + self.r2)
         self.c = self.a * self.r1 * self.r2
 
@@ -24,7 +47,48 @@ class Factor:
         x = sp.symbols('x')
         equation = self.a * x**2 + self.b * x + self.c
 
-        return equation, self.r1, self.r2
+        # Return the equation and its string representation
+        return equation, self.format_equation(equation)
+
+    def generate_cubic_problem(self):
+        # Generate cubic problems with real rational roots
+        x = sp.symbols('x')
+        root1 = random.randint(-5, 5)
+        root2 = random.randint(-5, 5)
+        root3 = random.randint(-5, 5)
+        
+        # Create cubic polynomial with these roots
+        polynomial = (x - root1) * (x - root2) * (x - root3)
+        equation = sp.expand(polynomial)
+        
+        return equation, self.format_equation(equation)
+
+    def generate_mixed_polynomial(self):
+        # Generate mixed polynomials with real rational roots
+        x, y = sp.symbols('x y')
+        
+        # Example: (x - a)(x - b)(y - c)
+        a = random.randint(-5, 5)
+        b = random.randint(-5, 5)
+        c = random.randint(-5, 5)
+        
+        polynomial = (x - a) * (x - b) * (y - c)
+        equation = sp.expand(polynomial)
+        
+        return equation, self.format_equation(equation)
+
+    def generate_other_polynomial(self):
+        # Generate polynomials with integer coefficients and real rational solutions
+        x, n, k = sp.symbols('x n k')
+        
+        # Example: n(x - 1) - k(x + 1)
+        n_value = random.randint(-5, 5)
+        k_value = random.randint(-5, 5)
+        
+        polynomial = n * (x - 1) - k * (x + 1)
+        equation = sp.expand(polynomial)
+        
+        return equation, self.format_equation(equation)
 
     def format_equation(self, equation):
         # Convert the equation to a string
@@ -36,19 +100,11 @@ class Factor:
         # Remove multiplication signs for better readability
         equation_str = equation_str.replace('*', '')
 
+        # Remove unnecessary spaces around operators
+        equation_str = re.sub(r'\s*\+\s*', ' + ', equation_str)
+        equation_str = re.sub(r'\s*-\s*', ' - ', equation_str)
+
         return equation_str
-
-    def format_factored_form(self, factored_expr):
-        # Convert the factored expression to a string
-        factored_str = str(factored_expr)
-
-        # Replace * with no space and handle power notation by converting ** to superscript
-        formatted_str = factored_str.replace('*', '')
-
-        # Convert powers (**) to superscript using Unicode
-        formatted_str = re.sub(r'\*\*(\d+)', lambda match: self.superscript(match.group(1)), formatted_str)
-
-        return formatted_str
 
     def superscript(self, number):
         # Mapping digits to superscript characters
@@ -76,6 +132,6 @@ class Factor:
     def check_ans(self, ans, correct_factors):
         # Normalize the user's answer
         user_factors = self.normalize_factors(ans)
-        
+        print(correct_factors)
         # Compare sorted factors with correct sorted factors
         return user_factors == correct_factors

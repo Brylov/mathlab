@@ -3,33 +3,64 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quadratic Solver</title>
+    <title>Math Solver</title>
     <!-- Tailwind CSS via CDN -->
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
 </head>
 <body class="bg-gray-100">
     <div class="min-h-screen flex items-center justify-center">
-        <div class="bg-white p-8 rounded shadow-md w-full max-w-lg">
-            <h1 class="text-2xl font-bold mb-4">Quadratic Equation Solve Game</h1>
+        <div class="bg-white p-8 rounded shadow-md w-full max-w-lg relative">
 
-            <!-- Display current quadratic equation to solve -->
-            <label class="block">
-                <span class="text-gray-700">Solve the equation:</span>
-                <div class="text-xl font-mono">
-                <strong>{{ equation }}</strong>
-                </div>
-            </label>
+            <!-- Settings Gear Icon -->
+            <button id="settings-button" class="absolute top-4 right-4 p-2 text-gray-700 hover:text-gray-900">
+                <i class="fa-solid fa-gear"></i>
+            </button>
+            
+            <!-- Settings Popup -->
+            <div id="settings-popup" class="hidden absolute top-14 right-4 bg-white p-4 border rounded shadow-md z-10">
+                <form action="/set_difficulty" method="POST" class="mt-4 space-y-4">
+                    <label for="difficulty" class="block text-gray-700">Select difficulty:</label>
+                    <select name="difficulty" class="border rounded p-2 w-full">
+                        <option value="easy" {% if difficulty == 'easy' %}selected{% endif %}>Easy</option>
+                        <option value="medium" {% if difficulty == 'medium' %}selected{% endif %}>Medium</option>
+                        <option value="hard" {% if difficulty == 'hard' %}selected{% endif %}>Hard</option>
+                    </select>
+                    <input type="hidden" name="type" value="{{ problem_type }}">  <!-- Ensure type is included -->
+                    <button type="submit" class="bg-green-500 text-white px-4 py-2 rounded">Set Difficulty</button>
+                </form>
+            </div>
+
+            <h1 class="text-2xl font-bold mb-4">Math Problem Solver</h1>
+
+            <!-- Problem Type Selector -->
+            <form action="/" method="GET" class="mb-4">
+                <label for="type" class="block text-gray-700">Select problem type:</label>
+                <select name="type" id="type" class="border rounded p-2 w-full">
+                    <option value="quadratic" {% if problem_type == 'quadratic' %}selected{% endif %}>Quadratic Equations</option>
+                    <option value="bedmas" {% if problem_type == 'bedmas' %}selected{% endif %}>BEDMAS Problems</option>
+                </select>
+                <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded mt-2">Select</button>
+            </form>
+
+            <!-- Display current problem to solve -->
+            {% if problem_type == 'bedmas' %}
+                <label class="block">
+                    <span class="text-gray-700">Solve the expression:</span>
+                    <div class="text-xl font-mono">
+                        <strong>{{ problem }}</strong>
+                    </div>
+                </label>
+            {% else %}
+                <label class="block">
+                    <span class="text-gray-700">Solve the equation:</span>
+                    <div class="text-xl font-mono">
+                        <strong>{{ equation }}</strong>
+                    </div>
+                </label>
+            {% endif %}
 
             <!-- Display result of previous attempt (Correct or Incorrect) -->
-            
-            <!-- Form to submit the factored form -->
-            <form action="/solve" method="POST" class="space-y-4 mt-6">
-                <input type="text" name="user_answer" class="border rounded p-2 w-full" placeholder="Enter factored form...">
-                <div class="space-x-4">
-                    <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">Submit</button>
-                </div>
-            </form>
-            
             {% if result %}
                 <div class="mt-6">
                     <p class="text-gray-700">Result: <strong>{{ result }}</strong></p>
@@ -39,7 +70,29 @@
                 </div>
             {% endif %}
 
+            <!-- Form to submit the factored form or BEDMAS answer -->
+            <form action="/solve" method="POST" class="space-y-4 mt-6">
+                <input type="text" name="user_answer" class="border rounded p-2 w-full" placeholder="Enter your answer...">
+                <input type="hidden" name="problem_type" value="{{ problem_type }}">
+                <input type="hidden" name="difficulty" value="{{ difficulty }}">
+                <div class="space-x-4">
+                    <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">Submit</button>
+                </div>
+            </form>
+
+            <!-- New problem button -->
+            <a href="/new?type={{ problem_type }}&difficulty={{ difficulty }}" class="mt-6 block text-center text-blue-500 hover:underline">
+                Get a new problem
+            </a>
         </div>
     </div>
+
+    <script>
+        // Toggle settings popup visibility
+        document.getElementById('settings-button').addEventListener('click', function() {
+            var popup = document.getElementById('settings-popup');
+            popup.classList.toggle('hidden');
+        });
+    </script>
 </body>
 </html>
